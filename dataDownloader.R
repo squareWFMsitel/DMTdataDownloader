@@ -11,7 +11,7 @@ browseURL("https://squarecc-us-prod-v1.awsapps.com/connect/historical-metrics/ag
 Year = 2022
 Month = "02"
 dateStart = 1
-dateEnd = 2
+dateEnd = 12
 DateRange = c("01","02","03","04","05","06","07","08","09",10:31)
 DateRange = DateRange[dateStart:dateEnd]
 
@@ -33,11 +33,8 @@ Sys.sleep(1)
 mouse.move(2699,475)
 mouse.click(button = "left")
 
-#loop
-Sys.sleep(3)
-mouse.get_cursor()
 
-for (n in 1:2) #length(emails)
+for (n in 1:length(emails)) #length(emails)
 {
   # Agent Login
   mouse.move(2061,338)
@@ -64,7 +61,7 @@ for (n in 1:2) #length(emails)
     Sys.sleep(0.5)
     keybd.press('del')
     Sys.sleep(0.5)
-    keybd.type_string(paste(Year,"-",Month,"-",date))
+    keybd.type_string(paste0(Year,"-",Month,"-",date))
     mouse.move(2446,450)
     mouse.click(button = "left")
     Sys.sleep(0.5)
@@ -95,7 +92,7 @@ for (n in 1:2) #length(emails)
   csv_list <- unlist(csv_list)
   
   #write the csv as one single file
-  write.csv(csv_list,file = paste("Data/dmt_data_output",sub("\\-.*", "", email),".csv"))
+  write.csv(csv_list,file = paste0("Data/dmt_data_output/",sub("\\-.*", "", emails[n]),".csv"),row.names = F)
 
   # delete individual files
   unlink(filenames)
@@ -105,7 +102,18 @@ files <- list.files(path="Data/dmt_data_output",
                         full.names=TRUE,
                         pattern = "*.csv$")
 
-FinalData <- map_df(files, ~read.csv(.x) %>% mutate(File = basename(.x)))
-write.csv(FinalData,file = "Data/finalDMTdata/FinalData.csv")
+FinalData <- map_df(files, ~read.csv(.x, sep = ",") %>% mutate(File = basename(.x)))
+
 # delete individual files
-unlink(files) 
+unlink(files)
+
+library(splitstackshape)
+FinalData <- cSplit(FinalData,"x","\"")[,c(1,3,5)]
+colnames(FinalData) <- c("Agent","DateTime","Status")
+FinalData$Agent <- sub("\\..*", "", FinalData$Agent)
+write.csv(FinalData,file = "Data/finalDMTdata/FinalData.csv",row.names = F)
+
+# Final Message
+msgBox2 <- tkmessageBox(title = "Hello Again!",
+                       message = "I am done!", icon = "info", type = "ok")
+
