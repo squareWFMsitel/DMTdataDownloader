@@ -1,6 +1,9 @@
 library(KeyboardSimulator)
 library(dplyr)
 library(purrr)
+library(tcltk)
+
+setwd("~/WFM SQUARE Files/R files/DMTdataDownloader")
 
 # Data import
 agents <- read.csv(url("https://raw.githubusercontent.com/squareWFMsitel/AbsenteeismReports/main/Data/bpoemails.csv"))
@@ -8,15 +11,17 @@ emails <- agents$Email.Addresses
 
 # Open the URL
 browseURL("https://squarecc-us-prod-v1.awsapps.com/connect/historical-metrics/agent-activity-audit")
+
 Year = 2022
 Month = "02"
 dateStart = 1
-dateEnd = 12
+dateEnd = 2
+
 DateRange = c("01","02","03","04","05","06","07","08","09",10:31)
 DateRange = DateRange[dateStart:dateEnd]
 
 # Check if ready
-require(tcltk)
+
 msgBox <- tkmessageBox(title = "Hello WFM",
                        message = "Are you Ready?", icon = "info", type = "ok")
 
@@ -33,8 +38,8 @@ Sys.sleep(1)
 mouse.move(2699,475)
 mouse.click(button = "left")
 
-
-for (n in 1:length(emails)) #length(emails)
+# for (n in 201:length(emails)-16) #length(emails)
+for (n in 1:2) # test
 {
   # Agent Login
   mouse.move(2061,338)
@@ -102,7 +107,7 @@ files <- list.files(path="Data/dmt_data_output",
                         full.names=TRUE,
                         pattern = "*.csv$")
 
-FinalData <- map_df(files, ~read.csv(.x, sep = ",") %>% mutate(File = basename(.x)))
+FinalData <- map_df(files, ~read.csv(.x, sep =",") %>% mutate(File = basename(.x)))
 
 # delete individual files
 unlink(files)
@@ -111,7 +116,7 @@ library(splitstackshape)
 FinalData <- cSplit(FinalData,"x","\"")[,c(1,3,5)]
 colnames(FinalData) <- c("Agent","DateTime","Status")
 FinalData$Agent <- sub("\\..*", "", FinalData$Agent)
-write.csv(FinalData,file = "Data/finalDMTdata/FinalData.csv",row.names = F)
+write.csv(FinalData,file = "Data/finalDMTdata/FinalData2.csv",row.names = F)
 
 # Final Message
 msgBox2 <- tkmessageBox(title = "Hello Again!",
