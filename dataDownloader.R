@@ -15,7 +15,9 @@ browseURL("https://squarecc-us-prod-v1.awsapps.com/connect/historical-metrics/ag
 Year = 2022
 Month = "02"
 dateStart = 1
-dateEnd = 2
+dateEnd = 15
+agentStart = 201
+agentEnd = 250 #length(emails)
 
 DateRange = c("01","02","03","04","05","06","07","08","09",10:31)
 DateRange = DateRange[dateStart:dateEnd]
@@ -24,9 +26,6 @@ DateRange = DateRange[dateStart:dateEnd]
 
 msgBox <- tkmessageBox(title = "Hello WFM",
                        message = "Are you Ready?", icon = "info", type = "ok")
-
-
-
 
 
 # time zone setting
@@ -38,8 +37,7 @@ Sys.sleep(1)
 mouse.move(2699,475)
 mouse.click(button = "left")
 
-# for (n in 201:length(emails)-16) #length(emails)
-for (n in 1:2) # test
+for (n in agentStart:agentEnd)
 {
   # Agent Login
   mouse.move(2061,338)
@@ -90,8 +88,8 @@ for (n in 1:2) # test
   #read the files in as plaintext
   csv_list <- lapply(filenames , readLines)
   
-  #remove the header from all but the first file
-  csv_list[-1] <- sapply(csv_list[-1], "[", 2)
+  # #remove the header from all but the first file
+  # csv_list[-1] <- sapply(csv_list[-1], "[", 2)
   
   #unlist to create a character vector
   csv_list <- unlist(csv_list)
@@ -116,9 +114,25 @@ library(splitstackshape)
 FinalData <- cSplit(FinalData,"x","\"")[,c(1,3,5)]
 colnames(FinalData) <- c("Agent","DateTime","Status")
 FinalData$Agent <- sub("\\..*", "", FinalData$Agent)
-write.csv(FinalData,file = "Data/finalDMTdata/FinalData2.csv",row.names = F)
+FinalData <- left_join(FinalData, agents, by = c("Agent" = "LookUp"))[,c(4,2,3)]
+
+write.csv(FinalData[complete.cases(FinalData),],file = paste0("Data/finalDMTdata/date",dateStart,"_",dateEnd,"agent",agentStart,"_",agentEnd,".csv"),row.names = F)
 
 # Final Message
 msgBox2 <- tkmessageBox(title = "Hello Again!",
                        message = "I am done!", icon = "info", type = "ok")
+
+
+if(0) # change to 1 if you wanna merge
+{
+  require(data.table)
+  
+  filenames <- list.files(path="Data/finalDMTdata",
+                      full.names=TRUE,
+                      pattern = "^date.*.csv$")
+  
+  FinalData2 = rbindlist(lapply(filenames, fread))
+  
+  write.csv(FinalData2,file = "Data/finalDMTdata/FinalData.csv",row.names = F, fileEncoding="UTF-8" )
+}
 
